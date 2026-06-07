@@ -13,7 +13,7 @@ RCON_HOST= os.getenv("RCON_HOST")
 RCON_PORT= os.getenv("RCON_PORT")
 bot = Bot(BOT_TOKEN)
 dp = Dispatcher()
-
+port = int(port)
 # заявки: nick -> данные + user_id
 pending = {}
 deny_buffer = {}  # для хранения кого отклоняем
