@@ -22,7 +22,7 @@ RCON_PORT= int(RCON_PORT)
 def swl_add(nick: str):
     with MCRcon(RCON_HOST, RCON_PASSWORD, port=RCON_PORT) as mcr:
         return mcr.command(f"swl add {nick}")
-
+        result = mcr.command(f"swl list")
 
 # ---------------- STATES ----------------
 class Form(StatesGroup):
