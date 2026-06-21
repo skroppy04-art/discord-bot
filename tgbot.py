@@ -5,7 +5,6 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from mcrcon import MCRcon
-from aiohttp import web
 import os
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID"))
@@ -14,67 +13,17 @@ RCON_HOST= os.getenv("RCON_HOST")
 RCON_PORT= os.getenv("RCON_PORT")
 bot = Bot(BOT_TOKEN)
 dp = Dispatcher()
+
 # заявки: nick -> данные + user_id
 pending = {}
 deny_buffer = {}  # для хранения кого отклоняем
-RCON_PORT= int(RCON_PORT)
-API_SECRET = os.getenv("API_SECRET")
 
-async def create_application(request):
-    data = await request.json()
 
-    if data.get("secret") != API_SECRET:
-        return web.json_response(
-            {"ok": False},
-            status=403
-        )
-
-    nick = data["nick"]
-    age = data["age"]
-    source = data["source"]
-    goal = data["goal"]
-
-    vk_user_id = data["vk_user_id"]
-
-    pending[nick] = {
-        "user_id": vk_user_id,
-        "age": age,
-        "source": source,
-        "goal": goal,
-        "platform": "vk"
-    }
-
-    kb = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="✔️ Одобрить",
-                    callback_data=f"ok:{nick}"
-                ),
-                InlineKeyboardButton(
-                    text="❌ Отклонить",
-                    callback_data=f"no:{nick}"
-                )
-            ]
-        ]
-    )
-
-    await bot.send_message(
-        ADMIN_ID,
-        f"📥 НОВАЯ VK ЗАЯВКА\n\n"
-        f"👤 Ник: {nick}\n"
-        f"🎂 Возраст: {age}\n"
-        f"📡 Узнал: {source}\n"
-        f"🎯 Цель: {goal}",
-        reply_markup=kb
-    )
-
-    return web.json_response({"ok": True})
 # ---------------- RCON ----------------
 def swl_add(nick: str):
     with MCRcon(RCON_HOST, RCON_PASSWORD, port=RCON_PORT) as mcr:
         return mcr.command(f"swl add {nick}")
-        result = mcr.command(f"swl list")
+
 
 # ---------------- STATES ----------------
 class Form(StatesGroup):
@@ -219,32 +168,11 @@ async def deny_reason(msg: Message):
 
     deny_buffer.clear()
 
-async def start_api():
 
-    app = web.Application()
-
-    app.router.add_post(
-        "/application",
-        create_application
-    )
-
-    runner = web.AppRunner(app)
-
-    await runner.setup()
-
-    site = web.TCPSite(
-        runner,
-        "0.0.0.0",
-        8080
-    )
-
-    await site.start()
 # ---------------- RUN ----------------
 async def main():
-
-    await start_api()
-
     await dp.start_polling(bot)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
