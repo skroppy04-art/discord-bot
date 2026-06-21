@@ -241,8 +241,10 @@ async def start_api():
     await site.start()
 # ---------------- RUN ----------------
 async def main():
-    await dp.start_polling(bot)
 
+    await start_api()
+
+    await dp.start_polling(bot)
 
 if __name__ == "__main__":
     asyncio.run(main())
