@@ -219,7 +219,26 @@ async def deny_reason(msg: Message):
 
     deny_buffer.clear()
 
+async def start_api():
 
+    app = web.Application()
+
+    app.router.add_post(
+        "/application",
+        create_application
+    )
+
+    runner = web.AppRunner(app)
+
+    await runner.setup()
+
+    site = web.TCPSite(
+        runner,
+        "0.0.0.0",
+        8080
+    )
+
+    await site.start()
 # ---------------- RUN ----------------
 async def main():
     await dp.start_polling(bot)
