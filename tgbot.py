@@ -1,5 +1,6 @@
 import asyncio
-from aiogram import Bot, Dispatcher, 
+from aiohttp import web
+from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.state import StatesGroup, State
@@ -168,7 +169,51 @@ async def deny_reason(msg: Message):
 
     deny_buffer.clear()
 
+# ---------------- VK API ----------------
 
+async def vk_application(request):
+    data = await request.json()
+
+    nick = data["nick"]
+    age = data["age"]
+    source = data["source"]
+    goal = data["goal"]
+
+    pending[nick] = {
+        "user_id": f"vk_{data['vk_user_id']}",
+        "age": age,
+        "source": source,
+        "goal": goal
+    }
+
+    platform_users[f"vk_{data['vk_user_id']}"] = data["vk_user_id"]
+
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="✔️ Одобрить",
+                    callback_data=f"ok:{nick}"
+                ),
+                InlineKeyboardButton(
+                    text="❌ Отклонить",
+                    callback_data=f"no:{nick}"
+                )
+            ]
+        ]
+    )
+
+    await bot.send_message(
+        ADMIN_ID,
+        f"📥 НОВАЯ VK ЗАЯВКА\n\n"
+        f"👤 Ник: {nick}\n"
+        f"🎂 Возраст: {age}\n"
+        f"📡 Узнал: {source}\n"
+        f"🎯 Цель: {goal}",
+        reply_markup=kb
+    )
+
+    return web.json_response({"ok": True})
 # ---------------- RUN ----------------
 async def main():
     await dp.start_polling(bot)
