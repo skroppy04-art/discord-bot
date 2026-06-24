@@ -1,5 +1,4 @@
 import asyncio
-from aiohttp import web
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
@@ -124,29 +123,18 @@ async def accept(call: CallbackQuery):
 
         user_id = pending[nick]["user_id"]
 
-        if str(user_id).startswith("vk_"):
-
-            await call.message.answer(
-                f"✅ Заявка VK игрока {nick} одобрена"
-            )
-
-        else:
-
-            await bot.send_message(
-                user_id,
-                f"✅ Ваша заявка одобрена!\n"
-                f"Вы добавлены в whitelist.\n"
-                f"Ник: {nick}"
-            )
-
-        await call.message.edit_text(
-            f"✔️ Одобрено\nИгрок: {nick}"
+        await bot.send_message(
+            user_id,
+            f"✅ Ваша заявка одобрена!\nВы добавлены в whitelist.\nНик: {nick}"
         )
+
+        await call.message.edit_text(f"✔️ Одобрено\nИгрок: {nick}")
 
     except Exception as e:
         await call.message.answer(f"RCON ошибка: {e}")
 
     await call.answer()
+
 
 # ---------------- DENY (запрос причины) ----------------
 @dp.callback_query(F.data.startswith("no:"))
@@ -180,51 +168,7 @@ async def deny_reason(msg: Message):
 
     deny_buffer.clear()
 
-# ---------------- VK API ----------------
 
-async def vk_application(request):
-    data = await request.json()
-
-    nick = data["nick"]
-    age = data["age"]
-    source = data["source"]
-    goal = data["goal"]
-
-    pending[nick] = {
-        "user_id": f"vk_{data['vk_user_id']}",
-        "age": age,
-        "source": source,
-        "goal": goal
-    }
-
-    platform_users[f"vk_{data['vk_user_id']}"] = data["vk_user_id"]
-
-    kb = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="✔️ Одобрить",
-                    callback_data=f"ok:{nick}"
-                ),
-                InlineKeyboardButton(
-                    text="❌ Отклонить",
-                    callback_data=f"no:{nick}"
-                )
-            ]
-        ]
-    )
-
-    await bot.send_message(
-        ADMIN_ID,
-        f"📥 НОВАЯ VK ЗАЯВКА\n\n"
-        f"👤 Ник: {nick}\n"
-        f"🎂 Возраст: {age}\n"
-        f"📡 Узнал: {source}\n"
-        f"🎯 Цель: {goal}",
-        reply_markup=kb
-    )
-
-    return web.json_response({"ok": True})
 # ---------------- RUN ----------------
 async def main():
     await dp.start_polling(bot)
