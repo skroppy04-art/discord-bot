@@ -124,18 +124,29 @@ async def accept(call: CallbackQuery):
 
         user_id = pending[nick]["user_id"]
 
-        await bot.send_message(
-            user_id,
-            f"✅ Ваша заявка одобрена!\nВы добавлены в whitelist.\nНик: {nick}"
-        )
+        if str(user_id).startswith("vk_"):
 
-        await call.message.edit_text(f"✔️ Одобрено\nИгрок: {nick}")
+            await call.message.answer(
+                f"✅ Заявка VK игрока {nick} одобрена"
+            )
+
+        else:
+
+            await bot.send_message(
+                user_id,
+                f"✅ Ваша заявка одобрена!\n"
+                f"Вы добавлены в whitelist.\n"
+                f"Ник: {nick}"
+            )
+
+        await call.message.edit_text(
+            f"✔️ Одобрено\nИгрок: {nick}"
+        )
 
     except Exception as e:
         await call.message.answer(f"RCON ошибка: {e}")
 
     await call.answer()
-
 
 # ---------------- DENY (запрос причины) ----------------
 @dp.callback_query(F.data.startswith("no:"))
